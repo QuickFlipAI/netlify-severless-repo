@@ -88,7 +88,7 @@ export const handler: Handler = async (
       }),
     };
   } catch (error) {
-    console.error('Error in handler:', error);
+    console.log('Error in handler:', error);
     return {
       statusCode: 500,
       body: JSON.stringify({ error: 'Internal Server Error', message: error }),
