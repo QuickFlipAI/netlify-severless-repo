@@ -53,6 +53,20 @@ export const handler: Handler = async (
     };
   }
 
+  // Handle preflight OPTIONS request
+  if (event.httpMethod === 'OPTIONS') {
+    console.log('Handling preflight OPTIONS request');
+    return {
+      statusCode: 200, // Must be 200 for preflight to succeed
+      headers: {
+        'Access-Control-Allow-Origin': '*', // Replace 3000 with your actual port
+        'Access-Control-Allow-Headers': '*',
+        'Access-Control-Allow-Methods': '*',
+      },
+      body: 'Preflight check successful',
+    };
+  }
+
   const scrapURL = `https://www.ebay.com/sch/i.html?_nkw=${formatItemName}&_sop=12&LH_Active=1&_ipg=240`;
   const client = new ScrapingBeeClient(process.env.BEE_KEY || '');
   const response = await client.get({ url: scrapURL });
@@ -70,9 +84,9 @@ export const handler: Handler = async (
   cache.timestamp = Date.now();
   cache.query = q;
   const headers = {
-    'Access-Control-Allow-Origin': '*', // Allows all origins
-    'Access-Control-Allow-Headers': '*', // Allows Content-Type header
-    'Access-Control-Allow-Methods': '*', // Allows specified methods
+    'Access-Control-Allow-Origin': '*', // Replace 3000 with your actual port
+    'Access-Control-Allow-Headers': '*',
+    'Access-Control-Allow-Methods': '*',
   };
   return {
     statusCode: 200,
