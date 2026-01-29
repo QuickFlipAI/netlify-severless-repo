@@ -72,9 +72,7 @@ export const handler: Handler = async (
     cache.timestamp = Date.now();
     cache.query = q;
     const headers = {
-      'Access-Control-Allow-Origin': '*', // Allows all origins
-      'Access-Control-Allow-Headers': '*', // Allows Content-Type header
-      'Access-Control-Allow-Methods': '*', // Allows specified methods
+      'access-control-allow-origin': '*',
     };
     console.log('Returning new fetched data length:', text.length);
 
@@ -93,7 +91,7 @@ export const handler: Handler = async (
     console.error('Error in handler:', error);
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: 'Internal Server Error' }),
+      body: JSON.stringify({ error: 'Internal Server Error', message: error }),
     };
   }
 };

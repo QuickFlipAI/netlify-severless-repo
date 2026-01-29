@@ -71,8 +71,8 @@ export const handler: Handler = async (
   cache.query = q;
   const headers = {
     'Access-Control-Allow-Origin': '*', // Allows all origins
-    'Access-Control-Allow-Headers': 'Content-Type', // Allows Content-Type header
-    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS', // Allows specified methods
+    'Access-Control-Allow-Headers': '*', // Allows Content-Type header
+    'Access-Control-Allow-Methods': '*', // Allows specified methods
   };
   return {
     statusCode: 200,
