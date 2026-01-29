@@ -92,7 +92,11 @@ export const handler: Handler = async (
 
     return {
       statusCode: 200,
-      headers,
+      headers: {
+        'Access-Control-Allow-Origin': '*', // Replace 3000 with your actual port
+        'Access-Control-Allow-Headers': '*',
+        'Access-Control-Allow-Methods': '*',
+      },
       body: JSON.stringify({
         query: q,
         stats,

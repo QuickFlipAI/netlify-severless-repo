@@ -8,7 +8,6 @@ import {
 import { ScrapingBeeClient } from 'scrapingbee'; // Importing SPB's SDK
 import 'dotenv/config'; // Import and configure dotenv
 import * as cheerio from 'cheerio';
-import { stringSimilarity } from 'string-similarity-js';
 
 // in-memory cache for 60 minutes
 const cache: { data: any; timestamp: number; query: string } = {
