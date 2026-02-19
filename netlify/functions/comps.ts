@@ -337,11 +337,11 @@ export const handler: Handler = async (
     const rawHTML = await response.data;
     let data = extractItemsFromHTML(rawHTML, q);
     let source = 'scrapingbee';
-    const stats = calculateSalesMetrics(data);
+    let stats = calculateSalesMetrics(data);
 
     if (!data || data.length < 3) {
       data = (await fetchSerp(q)) || [];
-      const stats = calculateSalesMetrics(data);
+      stats = calculateSalesMetrics(data);
 
       source = 'serpapi';
 
@@ -355,6 +355,8 @@ export const handler: Handler = async (
       cache.timestamp = Date.now();
       cache.query = q;
     } else {
+      stats = calculateSalesMetrics(data);
+
       cache.data = {
         query: q,
         stats,
