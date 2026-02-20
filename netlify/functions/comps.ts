@@ -329,7 +329,7 @@ export const handler: Handler = async (
       };
     }
 
-    const scrapURL = `https://www.ebay.com/sch/i.html?_nkw=${formatItemName}&_sop=12&LH_Sold=1&LH_Complete=1&_ipg=240`;
+    const scrapURL = `https://www.ebay.com/sch/i.html?_nkw=${formatItemName}&LH_PrefLoc=3&_sop=12&LH_Sold=1&LH_Complete=1&_ipg=240`;
     console.log('Fetching data from URL: ', scrapURL);
     const client = new ScrapingBeeClient(process.env.BEE_KEY || '');
     const response = await client.get({ url: scrapURL });
@@ -434,6 +434,7 @@ function extractItemsFromHTML(html: string, query: string) {
       const resultData = {
         title,
         price: parsedPrice?.value,
+        unparsedPrice: price,
         currency: parsedPrice?.symbol,
         soldDate: convertToDate(soldDate),
         condition: beautyCondition,
@@ -442,7 +443,7 @@ function extractItemsFromHTML(html: string, query: string) {
         shipping: shippingCost,
       };
       console.log(
-        `Extracted item: ${title} - $${parsedPrice.value} - Sold on ${soldDate}`,
+        `Extracted item: ${title} - $${parsedPrice.value} - Sold on ${soldDate} - ${price}`,
       );
 
       items.push(resultData);
@@ -554,6 +555,7 @@ async function fetchSerp(q: string) {
   u.searchParams.set('sold', 'true');
   u.searchParams.set('completed', 'true');
   u.searchParams.set('_nkw', q);
+  u.searchParams.set('LH_PrefLoc', '3');
   u.searchParams.set('api_key', SERP_KEY);
   const r = await fetch(u.toString());
   if (!r.ok) {
