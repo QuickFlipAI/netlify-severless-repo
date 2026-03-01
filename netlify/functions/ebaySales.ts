@@ -78,9 +78,9 @@ export const handler: Handler = async (
       };
     }
 
-    const scrapURL = `https://www.ebay.com/sch/i.html?_nkw=${formatItemName}&_sop=12&LH_Active=1&_ipg=240&LH_PrefLoc=3`;
+    const scrapURL = `https://www.ebay.com/sch/i.html?_nkw=${formatItemName}&_sop=12&LH_Active=1&_ipg=240&_salic=1&LH_PrefLoc=1`;
     const client = new ScrapingBeeClient(process.env.BEE_KEY || '');
-    const response = await client.get({ url: scrapURL });
+    const response = await client.get({ url: scrapURL, params: { timeout: 140000 } });
 
     const rawHTML = await response.data;
     let items = extractSellItemsFromHTML(rawHTML, q);
@@ -156,7 +156,10 @@ function extractSellItemsFromHTML(html: string, query: string) {
     const price = $(element).find('.s-card__price').text();
 
     const parsedPrice = parsePrice(price);
-
+    if (parsedPrice?.symbol !== '$') {
+      console.log(`Skipping item with non-USD currency: ${title} - ${price}`);
+      return;
+    }
     const subtile = $(element).find('.s-card__subtitle');
     const condition = subtile.find('span').first().text();
 
@@ -176,6 +179,7 @@ function extractSellItemsFromHTML(html: string, query: string) {
       console.log('title is ', title, 'price is ', price);
       const resultData = {
         title,
+        currency: parsedPrice?.symbol,
         price: parsedPrice?.value,
       };
       items.push(resultData);
@@ -270,12 +274,12 @@ async function fetchSerp(q: string) {
 
   const u = new URL('https://serpapi.com/search.json');
   u.searchParams.set('engine', 'ebay');
-  u.searchParams.set('ebay_domain', 'ebay.com');
-  u.searchParams.set('q', q);
-  u.searchParams.set('sold', 'false');
-  u.searchParams.set('completed', 'false');
+  u.searchParams.set('no_cache', 'true');
   u.searchParams.set('_nkw', q);
-  u.searchParams.set('LH_PrefLoc', '3');
+  u.searchParams.set('ebay_domain', 'ebay.com');
+  u.searchParams.set('LH_PrefLoc', '1');
+  u.searchParams.set('_salic', '1');
+  u.searchParams.set('_ipg', '200');
   u.searchParams.set('api_key', SERP_KEY);
   const r = await fetch(u.toString());
   if (!r.ok) {
@@ -294,7 +298,7 @@ async function fetchSerp(q: string) {
         imageUrl: it.thumbnail || '',
         itemUrl: it.link || '',
         soldDate: it.sold_at || new Date().toISOString(),
-        shipping: getShippingCost(it.shipping),
+        shipping: it.shipping ? getShippingCost(it.shipping) : 'Unknown',
         condition: it.condition || 'Unknown',
       };
     })
