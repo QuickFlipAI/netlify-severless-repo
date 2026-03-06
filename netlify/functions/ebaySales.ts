@@ -8,6 +8,7 @@ import {
 import { ScrapingBeeClient } from 'scrapingbee'; // Importing SPB's SDK
 import 'dotenv/config'; // Import and configure dotenv
 import * as cheerio from 'cheerio';
+import parseCurrency from 'parsecurrency';
 
 // in-memory cache for 60 minutes
 const cache: { data: any; timestamp: number; query: string } = {
@@ -80,6 +81,9 @@ export const handler: Handler = async (
 
     const scrapURL = `https://www.ebay.com/sch/i.html?_nkw=${formatItemName}&_sop=12&LH_Active=1&_ipg=240&_salic=1&LH_PrefLoc=1`;
     const client = new ScrapingBeeClient(process.env.BEE_KEY || '');
+    if (!process.env.BEE_KEY) {
+      throw new Error('ScrapingBee API key not configured');
+    }
     const response = await client.get({ url: scrapURL, params: { timeout: 140000 } });
 
     const rawHTML = await response.data;
@@ -225,7 +229,6 @@ function quantile(arr: number[], q: number) {
 function parsePrice(
   priceStr: string,
 ): { value: number; currency: string; symbol: string } | null {
-  const parseCurrency = require('parsecurrency');
   if (priceStr.trim() === '') {
     return null;
   }
