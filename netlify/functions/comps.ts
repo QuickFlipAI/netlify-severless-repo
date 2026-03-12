@@ -84,7 +84,7 @@ export const handler: Handler = async (
     // const startDate = thirtyDaysAgo.toISOString().split('T')[0];
     // const endDate = new Date().toISOString().split('T')[0];
 
-    const scrapURL = `https://www.ebay.com/sch/i.html?_nkw=${formatItemName}&_sop=12&LH_Active=1&_ipg=240&_salic=1&LH_PrefLoc=1`
+    const scrapURL = `https://www.ebay.com/sch/i.html?_nkw=${formatItemName}&LH_PrefLoc=1&_sop=12&LH_Sold=1&LH_Complete=1&_ipg=240&_salic=1`
     // `https://www.ebay.com/sh/research?marketplace=EBAY-US&keywords=${formatItemName}&dayRange=30&endDate=${endDate}&startDate=${startDate}&offset=0&limit=50&tabName=SOLD&tz=${TZ}`;
 
     const client = new ScrapingBeeClient(process.env.BEE_KEY || '');
