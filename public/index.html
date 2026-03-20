@@ -23,7 +23,7 @@
 
 
         fetchBtn.addEventListener('click', async () => {
-          const url = '/.netlify/functions/comps?q=steam-deck';
+          const url = '/.netlify/functions/comps?q=nintendo+switch';
           const response = await fetch(url);
           const data = await response.json()
           responseText.innerText = JSON.stringify(data, null, 2)
