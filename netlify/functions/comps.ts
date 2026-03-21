@@ -167,13 +167,11 @@ function extractItemsFromHTML(html: string, query: string) {
     const subtile = $(element).find('.s-card__subtitle');
     const condition = subtile.find('span').first().text();
     let imageDiv = $(element).find('.su-media__image');
-    if (!imageDiv || imageDiv.length === 0) {
-      imageDiv = $(element).find('.s-card__image');
+    let imageUrl = imageDiv.find('img').attr('src');
+    if (!imageUrl) {
+      imageDiv = $(element).find('.su-image');
+      imageUrl = imageDiv.find('img').attr('src');
     }
-    if (!imageDiv || imageDiv.length === 0) {
-      imageDiv = $(element).find('.image-treatment');
-    }
-    const imageUrl = imageDiv.find('img').attr('src');
     console.log('+++++++++++++++++++++++++++++++++++++++');
     console.log('Image URL:', imageUrl);
     console.log('---------------------------------------');
