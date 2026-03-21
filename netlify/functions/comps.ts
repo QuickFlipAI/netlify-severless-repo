@@ -145,8 +145,8 @@ export const handler: Handler = async (
       }),
     };
   } catch (error) {
-    const msg = Buffer.from(error.response.data)
     console.log('Error in handler:', error);
+    const msg = Buffer.from(error.response.data)
     console.log(error.response.data);
     console.log('error body', msg.toString() )
     return {
@@ -233,7 +233,10 @@ function parsePrice(
   else {
     const parsed = parseCurrency(priceStr);
   
-    return {...parsed, currency: parsed.symbol === '$' && !!parsed.currency ? 'USD' : parsed.currency };
+    if (parsed) {
+      return {...parsed, currency: parsed?.symbol === '$' && !!parsed.currency ? 'USD' : parsed.currency };
+    } 
+    return parsed
   }
 }
 
