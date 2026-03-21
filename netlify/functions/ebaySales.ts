@@ -5,6 +5,7 @@ import {
   HandlerContext,
   HandlerResponse,
 } from '@netlify/functions';
+import * as cheerio from 'cheerio';
 import { ScrapingBeeClient } from 'scrapingbee'; // Importing SPB's SDK
 import 'dotenv/config'; // Import and configure dotenv
 import parseCurrency from 'parsecurrency';
@@ -153,22 +154,22 @@ export const handler: Handler = async (
       };
     }
 
-//     console.log(`Fetching eBay listings for: "${q}"`);
-//     let items = await fetchEbayItems(q);
-//     let response = {}
-//     let stats = {}
+    console.log(`Fetching eBay listings for: "${q}"`);
+    let items = await fetchEbayItems(q);
+    let response = {}
+    let stats = {}
     
-    const scrapURL = `https://www.ebay.com/sch/i.html?_nkw=${formatItemName}&_sop=12&LH_Active=1&_ipg=240&_salic=1&LH_PrefLoc=1`;
-    const client = new ScrapingBeeClient(process.env.BEE_KEY || '');
-    const response = await client.get({
-      url: scrapURL,
-      params: { timeout: 140000 },
-    });
+    // const scrapURL = `https://www.ebay.com/sch/i.html?_nkw=${formatItemName}&_sop=12&LH_Active=1&_ipg=240&_salic=1&LH_PrefLoc=1`;
+    // const client = new ScrapingBeeClient(process.env.BEE_KEY || '');
+    // const response = await client.get({
+    //   url: scrapURL,
+    //   params: { timeout: 140000 },
+    // });
 
-    const rawHTML = await response.data;
-    let items = extractSellItemsFromHTML(rawHTML, q);
-    let stats = calculateSalesMetrics(items);
-    let source = 'scrapingbee';
+    // const rawHTML = await response.data;
+    // let items = extractSellItemsFromHTML(rawHTML, q);
+    // let stats = calculateSalesMetrics(items);
+    // let source = 'scrapingbee';
 
     // Fallback: if scrapingbee returned too few items, try SerpAPI as backup
     if (!items || items.length < 3) {
