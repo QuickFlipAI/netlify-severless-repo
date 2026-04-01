@@ -146,9 +146,12 @@ export const handler: Handler = async (
     };
   } catch (error) {
     console.log('Error in handler:', error);
-    const msg = Buffer.from(error.response.data)
-    console.log(error.response.data);
-    console.log('error body', msg.toString() )
+    if (error.response && error.response.data) {
+      const msg = Buffer.from(error.response.data)
+      console.log(error.response.data);
+
+      console.log('error body', msg.toString())
+    }
     return {
       statusCode: 500,
       headers: {
@@ -181,9 +184,9 @@ function extractSellItemsFromHTML(html: string, query: string) {
       imageDiv = $(element).find('.image-treatment');
     }
     const imageUrl = imageDiv.find('img').attr('src');
-    console.log('+++++++++++++++++++++++++++++++++++++++');
-    console.log('Image URL:', imageUrl);
-    console.log('---------------------------------------');
+    // console.log('+++++++++++++++++++++++++++++++++++++++');
+    // console.log('Image URL:', imageUrl);
+    // console.log('---------------------------------------');
     const itemUrl = imageDiv.find('a').attr('href');
     const parsedPrice = parsePrice(price);
     if (parsedPrice?.currency !== 'USD' && parsedPrice?.symbol !== '$') {
