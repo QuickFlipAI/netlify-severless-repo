@@ -24,16 +24,16 @@ export const handler: Handler = async (
     }
 
 
-    const prices = await stripe.prices.list({
-      expand: ['data.product'],
-      recurring: {
-        interval: 'month'
-      }
-    });
+    // const prices = await stripe.prices.list({
+    //   expand: ['data.product'],
+    //   recurring: {
+    //     interval: 'month'
+    //   }
+    // });
 
-    console.log(prices);
+    // console.log(prices);
 
-    const priceId = 'price_1TMwcRKkFs1y9M8NyAFNhqjs'
+    const priceId = event.queryStringParameters?.priceId; // Replace with logic to select the appropriate price
     const metadata = {
       userId
     }
