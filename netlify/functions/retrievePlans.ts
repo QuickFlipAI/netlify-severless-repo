@@ -4,7 +4,7 @@ import Stripe from 'stripe';
 interface StripePlanResponse {
   id: string;
   productId: string;
-  productName: string;
+  name: string;
   amount: number;
   currency: string;
   interval?: string;
@@ -35,10 +35,14 @@ export const handler: Handler = async (
       for (const price of prices.data) {
         const product = price.product as Stripe.Product;
 
+        if (!product.active) {
+          continue;
+        }
+
         allPlans.push({
           id: price.id,
           productId: product.id,
-          productName: product.name,
+          name: product.name,
           amount: price.unit_amount || 0,
           currency: price.currency,
           interval: price.recurring?.interval,

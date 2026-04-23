@@ -113,14 +113,14 @@ export const handler: Handler = async (
     }
 
     let req = JSON.parse(event.body);
-    console.log({data: req.data.object});
+    // console.log({data: req.data.object});
 
     const sessionId = req.data.object.id;
     console.log(`Session ID: ${sessionId}`);
 
     let userId = req.data.object.metadata?.userId;
 
-    console.log({userId, event: req.data.object.object});
+    // console.log({userId, event: req.data.object.object});
 
     if (!!userId && req.data.object.object === 'checkout.session') {
       const customerObject = {...req.data.object.customer_details, id: req.data.object.customer};
@@ -140,7 +140,7 @@ export const handler: Handler = async (
     // If you are testing with the CLI, find the secret by running 'stripe listen'
     // If you are using an endpoint defined with the API or dashboard, look in your webhook settings
     // at https://dashboard.stripe.com/webhooks
-    const endpointSecret = 'whsec_371535d14348a9d70499e9665c179b1497ffc01b1932f9c7a9ed0ca83dbbbda4';
+    const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
     // Only verify the event if you have an endpoint secret defined.
     // Otherwise use the basic event deserialized with JSON.parse
     if (endpointSecret) {
@@ -293,6 +293,15 @@ async function handleSubscriptionCreated(subscription: StripeSubscription, userI
       return;
     }
 
+
+    console.log({subscription});
+
+    const month = 30 * 86400;
+    const current_period_start = new Date(subscription.start_date * 1000).toISOString();
+    const current_period_end = new Date((subscription.start_date + (month * subscription.plan.interval_count)) * 1000).toISOString();
+
+    console.log({t: current_period_end, t2: current_period_start});
+
     // Create subscription in Supabase (customer doesn't need to exist)
     const { data: createdSubscription, error: subscriptionError } = await supabase
       .from('subscriptions')
@@ -301,8 +310,8 @@ async function handleSubscriptionCreated(subscription: StripeSubscription, userI
         stripe_customer_id: stripeCustomerId,
         plan_id: plan.id,
         status: subscription.status,
-        current_period_start: new Date().toISOString(),
-        current_period_end: new Date().toISOString(),
+        current_period_start,
+        current_period_end,
         // trial_start: subscription.trial_start ? new Date(subscription.trial_start * 1000).toISOString() : null,
         // trial_end: subscription.trial_end ? new Date(subscription.trial_end * 1000).toISOString() : null,
         quantity: subscription.items.data[0]?.quantity || 1,
@@ -387,13 +396,21 @@ async function handleSubscriptionUpdated(subscription: StripeSubscription) {
       return;
     }
 
+    console.log({subscription});
+
+    const month = 30 * 86400;
+    const current_period_start = new Date(subscription.start_date * 1000)
+    const current_period_end = new Date((subscription.start_date + (month * subscription.plan.interval_count)) * 1000)
+
+    console.log({t: current_period_end.toISOString(), t2: current_period_start.toISOString()});
+
     // Update subscription in Supabase
     const { error: updateError } = await supabase
       .from('subscriptions')
       .update({
         status: subscription.status,
-        // current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
-        // current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+        current_period_start,
+        current_period_end,
         // trial_start: subscription.trial_start ? new Date(subscription.trial_start * 1000).toISOString() : null,
         // trial_end: subscription.trial_end ? new Date(subscription.trial_end * 1000).toISOString() : null,
         cancel_at: subscription.cancel_at ? new Date(subscription.cancel_at * 1000).toISOString() : null,
