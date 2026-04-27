@@ -11,6 +11,17 @@ interface StripeCustomer {
   metadata?: Record<string, any>;
 }
 
+interface StripeCheckoutSession {
+  id: string;
+  customer: string | StripeCustomer;
+  customer_details: {
+    email: string;  
+    name?: string;
+  };
+  metadata?: Record<string, any>;
+  object: string;
+}
+
 interface StripeSubscription {
   id: string;
   customer: string;
@@ -112,13 +123,43 @@ export const handler: Handler = async (
       };
     }
 
-    let req = JSON.parse(event.body);
+    // Replace this endpoint secret with your endpoint's unique secret
+    // If you are testing with the CLI, find the secret by running 'stripe listen'
+    // If you are using an endpoint defined with the API or dashboard, look in your webhook settings
+    // at https://dashboard.stripe.com/webhooks
+    const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    // Only verify the event if you have an endpoint secret defined.
+    // Otherwise use the basic event deserialized with JSON.parse
+    let req = null
+    const signature = event.headers['stripe-signature'];
+
+    console.log('Webhook signature verification:', typeof event.body, signature, endpointSecret,);
+
+    if (endpointSecret) {
+      // Get the signature sent by Stripe
+      try {
+        req = stripe.webhooks.constructEvent(
+          event.body,
+          signature!,
+          endpointSecret
+        );
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : String(err);
+        console.log(`⚠️  Webhook signature verification failed.`, errorMessage);
+        return {
+            statusCode: 400
+        }
+      }
+    }
+    
+    req = JSON.parse(event.body);
     // console.log({data: req.data.object});
 
     const sessionId = req.data.object.id;
     console.log(`Session ID: ${sessionId}`);
 
     let userId = req.data.object.metadata?.userId;
+    console.log(`User ID from session metadata: ${userId}`);
 
     // console.log({userId, event: req.data.object.object});
 
@@ -134,32 +175,6 @@ export const handler: Handler = async (
     //   userId = session.metadata?.userId;
     // }
 
-    console.log(`User ID from session metadata: ${userId}`);
-
-    // Replace this endpoint secret with your endpoint's unique secret
-    // If you are testing with the CLI, find the secret by running 'stripe listen'
-    // If you are using an endpoint defined with the API or dashboard, look in your webhook settings
-    // at https://dashboard.stripe.com/webhooks
-    const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
-    // Only verify the event if you have an endpoint secret defined.
-    // Otherwise use the basic event deserialized with JSON.parse
-    if (endpointSecret) {
-      // Get the signature sent by Stripe
-      const signature = event.headers['stripe-signature'];
-      try {
-        req = stripe.webhooks.constructEvent(
-          event.body,
-          signature!,
-          endpointSecret
-        );
-      } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : String(err);
-        console.log(`⚠️  Webhook signature verification failed.`, errorMessage);
-        return {
-            statusCode: 400
-        }
-      }
-    }
 
     // Handle the event
     switch (req.type) {
@@ -227,9 +242,10 @@ export const handler: Handler = async (
       //   break;
 
       // // Checkout session events
-      // case 'checkout.session.completed':
-      //   console.log(`Checkout session completed: ${req.data.object.id}`);
-      //   break;
+      case 'checkout.session.completed':
+        // console.log(`Checkout session completed: ${req.data.object.id}`);
+        await handleCheckoutCompleted(req.data.object, userId);
+        break;
 
       // Price/Plan events
       case 'price.created':
@@ -266,6 +282,61 @@ export const handler: Handler = async (
     };
   }
 };
+
+async function handleCheckoutCompleted(checkout: StripeCheckoutSession) {
+  try {
+    // Validate required fields
+    if (!checkout?.id) {
+      console.error('Invalid checkout: missing checkout ID');
+      return;
+    }
+
+    const checkoutSessionId = checkout.id;
+
+    // Handle customer ID - could be string or StripeCustomer object
+    const customerId = typeof checkout.customer === 'string' 
+      ? checkout.customer 
+      : checkout.customer?.id;
+
+    if (!customerId) {
+      console.error('Invalid checkout: missing customer ID');
+      return;
+    }
+
+    // Prepare metadata safely
+    const baseMetadata = checkout.metadata || {};
+    const updatedMetadata = {
+      ...baseMetadata,
+      session_id: checkoutSessionId,
+    };
+
+    // Update customer record
+    const { data, error } = await supabase.from('customers')
+      .update({
+        session_id: checkoutSessionId,
+        metadata: updatedMetadata,
+      })
+      .eq('stripe_customer_id', customerId)
+      .select('id');
+
+    if (error) {
+      console.error('Database error updating customer with checkout session:', error);
+      return;
+    }
+
+    // Verify the update affected at least one row
+    if (!data || data.length === 0) {
+      console.warn(`No customer record found with ID: ${customerId}`);
+      return;
+    }
+
+    console.log(`Checkout completed successfully: ${checkoutSessionId} for customer: ${customerId}`);
+
+  } catch (err) {
+    console.error('Unexpected error in handleCheckoutCompleted:', err);
+  }
+}
+
 
 /**
  * Handle subscription created event
@@ -368,6 +439,7 @@ async function handleSubscriptionCreated(subscription: StripeSubscription, userI
           })
           .select('id')
           .single();
+          console.log(`customer created: ${userId} - ${stripeCustomerId}`);
       }
     }
 
@@ -726,12 +798,16 @@ async function handleCustomerCreated(customer: StripeCustomer, userId?: string) 
   try {
     const stripeCustomerId = customer.id;
 
+    if (!userId) {
+      console.warn('No user ID provided for customer creation, skipping database insert');
+      return;
+    }
     // Create customer in Supabase
     const { error: insertError } = await supabase
       .from('customers')
       .insert({
         stripe_customer_id: stripeCustomerId,
-        userId,
+        user_id: userId,
         email: customer.email,
         name: customer.name || null,
         metadata: customer.metadata || {},
