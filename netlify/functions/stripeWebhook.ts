@@ -386,6 +386,8 @@ async function handleSubscriptionCreated(subscription: StripeSubscription, userI
         status: subscription.status,
         current_period_start,
         current_period_end,
+        refered_payments_left: subscription.plan.interval_count,
+        refered_monthly_payment: false,
         // trial_start: subscription.trial_start ? new Date(subscription.trial_start * 1000).toISOString() : null,
         // trial_end: subscription.trial_end ? new Date(subscription.trial_end * 1000).toISOString() : null,
         quantity: subscription.items.data[0]?.quantity || 1,
