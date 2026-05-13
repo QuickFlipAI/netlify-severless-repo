@@ -7,7 +7,7 @@ import {
 import { Resend } from 'resend';
 import 'dotenv/config';
 
-const resend = new Resend(process.env.RESEND_KEY);
+const resend = new Resend(process.env.RESEND_KEY_FRONTEND);
 
 interface SubscriptionEmailRequest {
   email?: string;
