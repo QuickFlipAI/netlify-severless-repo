@@ -23,10 +23,9 @@ export const handler: Handler = async (
     const body = JSON.parse(event.body || '{}');
 
     // Validate required fields
-    const { email, verificationCode, name, id } = body;
-    const password = Math.random().toString(36).slice(2, 15);
+    const { email } = body;
 
-    if (!email || !verificationCode || !name) {
+    if (!email) {
       return {
         statusCode: 400,
         headers: {
@@ -40,41 +39,12 @@ export const handler: Handler = async (
         }),
       };
     }
-
-    // // Verify code (this would typically check against a stored code)
-    // if (verificationCode !== '') {
-    //   return {
-    //     statusCode: 400,
-    //     body: JSON.stringify({ error: 'Invalid verification code' })
-    //   };
-    // }
-
-    // Create user in Supabase
-      const { data, error } = await supabase.auth.admin.createUser({
-          email,
-          password,
-          email_confirm: true,
-          user_metadata: {
-              first_name: name.split(' ')[0],
-              last_name: [...name.split(' ').filter((_, i) => i !== 0)].join(' '),
-              refered: false,
-              refered_id: null,
-              is_creator: true
-          }
-      });
-
-    if (error) {
-      console.error('Supabase error:', error.message);
-      return {
-        statusCode: 500,
-        body: JSON.stringify({
-          error: 'Failed to create user',
-          details: error.message
-        })
-      };
-    }
-
-    const link =  process.env.APP_BASE_URL + '/auth/creator?id=' + id
+    
+    const { data: link } = await supabase.auth.admin.generateLink({
+      type: 'magiclink', email, options: {
+        redirectTo: process.env.APP_BASE_URL + '/auth/creator'
+      }
+    })
 
     return {
       statusCode: 201,
@@ -84,8 +54,7 @@ export const handler: Handler = async (
       },
       body: JSON.stringify({
         message: 'Account created successfully',
-        user: data?.[0],
-        link: link
+        link: link.properties?.action_link
       })
     };
   } catch (error) {
