@@ -19,6 +19,21 @@ export const handler: Handler = async (
   context: HandlerContext,
 ): Promise<HandlerResponse> => {
   try {
+
+    // Handle preflight OPTIONS request
+    if (event.httpMethod === 'OPTIONS') {
+      console.log('Handling preflight OPTIONS request');
+      return {
+        statusCode: 200, // Must be 200 for preflight to succeed
+        headers: {
+          'Access-Control-Allow-Origin': '*', // Replace 3000 with your actual port
+          'Access-Control-Allow-Headers': '*',
+          'Access-Control-Allow-Methods': '*',
+        },
+        body: 'Preflight check successful',
+      };
+    }
+
     // Get query parameters
     const queryParams = event.queryStringParameters || {};
     const { email, name } = queryParams as SubscriptionEmailRequest;
@@ -318,6 +333,11 @@ const result = await resend.emails.send({
 
     return {
       statusCode: 200,
+      headers: {
+        'Access-Control-Allow-Origin': '*', // Replace 3000 with your actual port
+        'Access-Control-Allow-Headers': '*',
+        'Access-Control-Allow-Methods': '*',
+      },
       body: JSON.stringify({
         success: true,
         message: 'Subscription email sent successfully',

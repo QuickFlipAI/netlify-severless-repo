@@ -6,3 +6,15 @@ node_modules
 .env
  
 .claude
+
+example-handler.ts
+
+events.json
+customers.json
+prices.json
+products.json
+subscriptions.json
+subscriptions-2.json
+sessions.json
+
+migrations
